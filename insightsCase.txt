@@ -1,0 +1,167 @@
+case 'insights': {
+  if (!globalData.energy) {
+    return (
+      <div className="p-6">
+        <p className="text-gray-500">Loading live eGauge data…</p>
+      </div>
+    );
+  }
+
+  const raw = globalData.energy.raw_data || {};
+
+  /* ---------------- Shared logic with EnergyOptimisation ---------------- */
+
+  const CIRCUITS = [
+    'HVAC/Aircom',
+    'Local Mains',
+    'Kitchen',
+    'Server Room',
+    'Canteen',
+    'Passage Plugs',
+    'Caretaker Flat',
+    'Battenlane (Outside DB)',
+  ];
+
+  const aggregateUsageW = CIRCUITS.reduce(
+    (sum, c) => sum + (Number(raw[c]) || 0),
+    0
+  );
+
+  const aggregateUsageKW = aggregateUsageW / 1000;
+
+  const powerFactor = Number(raw['Main Incomer Power Factor']) || 0;
+
+  const voltages = [
+    Number(raw['L1 Voltage']),
+    Number(raw['L2 Voltage']),
+    Number(raw['L3 Voltage']),
+  ].filter(Boolean);
+
+  const avgV =
+    voltages.reduce((a, b) => a + b, 0) / voltages.length;
+
+  const phaseImbalance =
+    voltages.length === 3
+      ? ((Math.max(...voltages) - Math.min(...voltages)) / avgV) * 100
+      : 0;
+
+  const GRID_EMISSION_FACTOR = 0.95;
+  const carbonKg = aggregateUsageKW * GRID_EMISSION_FACTOR;
+
+  const PEAK_DEMAND_THRESHOLD_KW = 80;
+
+  /* ---------------- Insight derivations ---------------- */
+
+  const sortedCircuits = CIRCUITS
+    .map(c => ({
+      name: c,
+      kw: (Number(raw[c]) || 0) / 1000,
+    }))
+    .sort((a, b) => b.kw - a.kw);
+
+  const topCircuit = sortedCircuits[0];
+
+  const recommendations = [];
+
+  if (powerFactor < 0.9) {
+    recommendations.push(
+      'Low power factor detected — installing or tuning power factor correction capacitors could reduce penalties.'
+    );
+  } else if (powerFactor < 0.95) {
+    recommendations.push(
+      'Power factor is acceptable but not optimal — monitoring is recommended.'
+    );
+  }
+
+  if (phaseImbalance > 5) {
+    recommendations.push(
+      'High phase voltage imbalance detected — investigate phase loading to protect equipment.'
+    );
+  }
+
+  if (aggregateUsageKW > PEAK_DEMAND_THRESHOLD_KW * 0.9) {
+    recommendations.push(
+      'Site is approaching contract demand limit — consider load shifting to avoid peak demand charges.'
+    );
+  }
+
+  if (topCircuit && topCircuit.kw > aggregateUsageKW * 0.4) {
+    recommendations.push(
+      `${topCircuit.name} dominates site load — targeted optimisation here will yield the biggest savings.`
+    );
+  }
+
+  if (recommendations.length === 0) {
+    recommendations.push(
+      'System operating within optimal parameters — continue monitoring for anomalies.'
+    );
+  }
+
+  /* ---------------- Render ---------------- */
+
+  return (
+    <div className="p-6 space-y-6">
+
+      {/* Overview */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="font-semibold mb-3">Live Energy Overview</h3>
+        <div className="space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span>Current Site Load</span>
+            <span className="font-medium">
+              {aggregateUsageKW.toFixed(1)} kW
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span>Power Factor</span>
+            <span className="font-medium">
+              {powerFactor.toFixed(3)}
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span>Phase Imbalance</span>
+            <span className="font-medium">
+              {phaseImbalance.toFixed(2)}%
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Circuit Insight */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="font-semibold mb-3">Circuit-Level Insight</h3>
+        <p className="text-sm text-gray-600 mb-3">
+          Highest contributing circuit:
+        </p>
+        <div className="flex justify-between text-sm">
+          <span>{topCircuit?.name}</span>
+          <span className="font-medium">
+            {topCircuit?.kw.toFixed(2)} kW
+          </span>
+        </div>
+      </div>
+
+      {/* Carbon & ESG */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="font-semibold mb-3">Carbon & ESG Context</h3>
+        <p className="text-sm text-gray-600">
+          Estimated real-time carbon emissions:
+        </p>
+        <p className="mt-2 font-medium">
+          {carbonKg.toFixed(2)} kgCO₂e
+        </p>
+      </div>
+
+      {/* Recommendations */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="font-semibold mb-3">AI-Driven Recommendations</h3>
+        <ul className="list-disc list-inside space-y-2 text-sm text-gray-700">
+          {recommendations.map((rec, idx) => (
+            <li key={idx}>{rec}</li>
+          ))}
+        </ul>
+      </div>
+
+    </div>
+  );
+}

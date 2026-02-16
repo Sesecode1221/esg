@@ -1,0 +1,62 @@
+{
+  "dashboard": {
+    "summaryMetrics": [
+      {
+        "id": "energy_efficiency",
+        "title": "Energy Efficiency",
+        "value": 87.5,
+        "unit": "%",
+        "change": 2.3,
+        "trend": "up",
+        "target": 90
+      },
+      {
+        "id": "waste_reduction",
+        "title": "Waste-to-Landfill Reduction",
+        "value": 342,
+        "unit": "tons",
+        "change": -15.2,
+        "trend": "down",
+        "target": 400
+      }
+    ],
+    "trendData": {
+      "timeLabels": ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+      "emissions": [1200, 1150, 1100, 1050, 1000, 980],
+      "energy": [4500, 4400, 4300, 4200, 4100, 4000],
+      "water": [25000, 24500, 24000, 23500, 23000, 22500]
+    }
+  },
+  "energy": {
+    "loadForecast": {
+      "actual": [450, 480, 520, 580, 620, 650, 680, 700, 680, 620, 550, 500],
+      "forecast": [460, 490, 530, 590, 630, 660, 690, 710, 690, 630, 560, 510]
+    },
+    "savings": {
+      "peakShaving": 1245,
+      "taxRebate": 890450,
+      "totalSavings": 1200000
+    }
+  },
+  "waste": {
+    "streams": [
+      {
+        "type": "construction",
+        "total": 2345,
+        "recycled": 1200,
+        "landfill": 1145,
+        "recyclingRate": 51.2
+      }
+    ],
+    "projects": [
+      {
+        "id": "project_001",
+        "name": "Mining Site A",
+        "location": "Limpopo",
+        "wasteGenerated": 1567,
+        "recyclingRate": 62.3,
+        "status": "excellent"
+      }
+    ]
+  }
+}
