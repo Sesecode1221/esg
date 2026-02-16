@@ -1,6 +1,14 @@
+# Node / React
 node_modules/
 frontend/node_modules/
 build/
+
+# Environment variables
 .env
+.env.*
+!.env.example
+
+# Python
 venv/
 __pycache__/
+*.pyc
